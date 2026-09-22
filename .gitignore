@@ -1,0 +1,27 @@
+# Ambiente Python e caches
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+
+# Cobertura de testes
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+
+# Empacotamento
+build/
+dist/
+*.egg-info/
+
+# Credenciais locais
+.env
+.env.*
+!.env.example
+
+# Dados e logs locais
+data/
+logs/
+*.log
