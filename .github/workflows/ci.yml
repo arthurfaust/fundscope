@@ -48,3 +48,16 @@ jobs:
 
       - name: Verificar execucao do container
         run: docker run --rm fundscope/app:ci
+      
+      - name: Verificar integracao com PostgreSQL
+        env:
+          COMPOSE_PROJECT_NAME: fundscope-ci
+          POSTGRES_DB: fundscope
+          POSTGRES_USER: fundscope
+          POSTGRES_PASSWORD: senha-descartavel-ci
+          POSTGRES_PORT: "5432"
+          FUNDSCOPE_IMAGE: fundscope/app:ci
+        run: |
+          trap 'docker compose --env-file .env.example down -v' EXIT
+          docker compose --env-file .env.example up -d --wait postgres
+          docker compose --env-file .env.example run --rm app
