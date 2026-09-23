@@ -62,7 +62,7 @@ jobs:
           trap 'docker compose --env-file .env.example down -v' EXIT
           docker compose --env-file .env.example up -d --wait postgres
           docker compose --env-file .env.example run --rm app
-      
+
       - name: Publicar imagem no GHCR
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         env:
