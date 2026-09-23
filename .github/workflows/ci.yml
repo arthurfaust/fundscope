@@ -42,3 +42,9 @@ jobs:
           --cov=fundscope.validation
           --cov-report=term-missing
           --cov-fail-under=80
+      
+      - name: Construir imagem Docker
+        run: docker build -t fundscope/app:ci .
+
+      - name: Verificar execucao do container
+        run: docker run --rm fundscope/app:ci
