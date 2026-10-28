@@ -8,13 +8,18 @@ permissions:
   contents: read
   packages: write
 
+concurrency:
+  group: cd-${{ github.ref }}
+  cancel-in-progress: false
+
 env:
   IMAGE_NAME: ghcr.io/arthurfaust/fundscope
 
 jobs:
-  deploy:
-    name: Publicar imagem Docker
+  staging:
+    name: Publicar em staging
     runs-on: ubuntu-latest
+    environment: staging
 
     steps:
       - name: Obter codigo
@@ -30,11 +35,36 @@ jobs:
       - name: Construir imagem
         run: |
           docker build \
-            -t $IMAGE_NAME:latest \
             -t $IMAGE_NAME:sha-${GITHUB_SHA} \
+            -t $IMAGE_NAME:staging \
             .
+
+      - name: Verificar execucao do container
+        run: docker run --rm $IMAGE_NAME:sha-${GITHUB_SHA}
 
       - name: Publicar imagem
         run: |
-          docker push $IMAGE_NAME:latest
           docker push $IMAGE_NAME:sha-${GITHUB_SHA}
+          docker push $IMAGE_NAME:staging
+
+  production:
+    name: Promover para production
+    runs-on: ubuntu-latest
+    needs: staging
+    environment: production
+
+    steps:
+      - name: Login no GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Promover imagem validada em staging
+        run: |
+          docker pull $IMAGE_NAME:sha-${GITHUB_SHA}
+          docker tag $IMAGE_NAME:sha-${GITHUB_SHA} $IMAGE_NAME:production
+          docker tag $IMAGE_NAME:sha-${GITHUB_SHA} $IMAGE_NAME:latest
+          docker push $IMAGE_NAME:production
+          docker push $IMAGE_NAME:latest
