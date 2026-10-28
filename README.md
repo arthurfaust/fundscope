@@ -65,8 +65,9 @@ Resumo das práticas adotadas:
   integradas à `main` por pull request.
 - **Commits:** mensagens no padrão Conventional Commits
   (`feat`, `fix`, `docs`, `ci`, `test`).
-- **Environments:** `staging` e `production` configurados no
-  GitHub. O `production` exige aprovação de `arthurfaust`.
+- **Environments:** `staging` e `production`, usados pelo CD e
+  restritos à branch `main`. O `production` exige aprovação de
+  `arthurfaust` antes da promoção da imagem.
 
 ### Evidências
 
@@ -135,8 +136,13 @@ Para verificar a conexão do container com o PostgreSQL:
   executa os testes com cobertura, valida o Docker Compose,
   constrói a imagem e testa a integração com o PostgreSQL.
 - **CD** (`.github/workflows/cd.yml`): roda a cada merge na
-  `main` e publica a imagem em `ghcr.io/arthurfaust/fundscope`,
-  com as tags `latest` e `sha-<commit>`.
+  `main` e publica a imagem em `ghcr.io/arthurfaust/fundscope`
+  em duas etapas:
+  1. **staging:** constrói a imagem, verifica a execução do
+     container e publica as tags `sha-<commit>` e `staging`.
+  2. **production:** aguarda a aprovação do revisor obrigatório
+     e promove a mesma imagem, sem reconstruir, para as tags
+     `production` e `latest`.
 
 ## Parar o ambiente
 
