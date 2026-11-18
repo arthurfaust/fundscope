@@ -1,0 +1,10 @@
+# O par de revisão recebe as solicitações de revisão do FundScope.
+# Mudanças de infraestrutura e dependências também envolvem o mantenedor.
+*                    @wesleydsoreis
+/.github/            @arthurfaust @wesleydsoreis
+/Dockerfile          @arthurfaust @wesleydsoreis
+/docker-compose.yml  @arthurfaust @wesleydsoreis
+/dags/               @arthurfaust @wesleydsoreis
+/sql/                @arthurfaust @wesleydsoreis
+/pyproject.toml       @arthurfaust @wesleydsoreis
+/uv.lock             @arthurfaust @wesleydsoreis

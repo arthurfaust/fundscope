@@ -1,0 +1,31 @@
+name: Funcionalidade
+description: Proponha uma nova funcionalidade ou melhoria
+title: 'feat: '
+body:
+  - type: textarea
+    id: problema
+    attributes:
+      label: Qual necessidade esta mudança resolve?
+    validations:
+      required: true
+  - type: textarea
+    id: criterios
+    attributes:
+      label: Critérios de aceitação
+      placeholder: |
+        - [ ] O resultado esperado pode ser verificado.
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Área
+      options:
+        - Extração de dados da CVM
+        - Validação e transformação de dados
+        - Carga e banco de dados
+        - Orquestração do pipeline
+        - Infraestrutura e CI/CD
+        - Documentação
+    validations:
+      required: true
