@@ -32,7 +32,8 @@ Gold e o dashboard em Streamlit.
 ## Estrutura do repositório
 
     .
-    ├── .github/workflows/   # CI (ci.yml) e CD (cd.yml)
+    ├── .github/             # Templates de PR e Issue, CODEOWNERS
+    │   └── workflows/       # CI (ci.yml) e CD (cd.yml)
     ├── docs/                # Plano de GCS e evidências
     │   └── evidencias/      # Prints e logs das configurações
     ├── sql/                 # Script de criação dos schemas
@@ -61,10 +62,16 @@ Resumo das práticas adotadas:
   o check "Qualidade e testes" aprovado.
 - **Revisão em par:** um colaborador com acesso de escrita revisa
   e aprova os pull requests.
-- **Branches de trabalho:** `feature/*`, `docs/*` e `ci/*`,
-  integradas à `main` por pull request.
-- **Commits:** mensagens no padrão Conventional Commits
-  (`feat`, `fix`, `docs`, `ci`, `test`).
+- **Branches de trabalho:** `feature/*`, `fix/*`, `docs/*`,
+  `ci/*` e `chore/*`, integradas à `main` por pull request.
+- **Merge:** somente *squash merge*. Cada pull request vira um
+  único commit na `main`, com o título do PR como mensagem, e a
+  branch de origem é apagada após o merge.
+- **Commits e títulos de PR:** padrão Conventional Commits
+  (`feat`, `fix`, `docs`, `ci`, `test`, `chore`, `refactor`).
+- **Modelos de colaboração:** template de pull request com o
+  checklist de revisão, templates de Issue (funcionalidade e
+  defeito) e `CODEOWNERS`, em `.github/`.
 - **Environments:** `staging` e `production`, usados pelo CD e
   restritos à branch `main`. O `production` exige aprovação de
   `arthurfaust` antes da promoção da imagem.

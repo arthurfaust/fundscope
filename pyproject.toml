@@ -1,7 +1,7 @@
 [project]
 name = "fundscope"
 version = "0.1.0"
-description = "Add your description here"
+description = "Pipeline de dados públicos de fundos de investimento da CVM (Bronze, Silver e Gold)"
 readme = "README.md"
 authors = [
     { name = "arthurfaust", email = "arthur.f.locatelli@gmail.com" }
