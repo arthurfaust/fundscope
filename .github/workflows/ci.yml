@@ -1,5 +1,8 @@
 name: CI
 
+# Na proteção da main, somente "ci-ok" e "titulo-pr" são obrigatórios (ADR 0002 da ONGConecta).
+# "Qualidade e testes" e "Análise de dependências (SCA)" são agregados pelo ci-ok.
+
 on:
   pull_request:
     branches: [main]
@@ -7,11 +10,13 @@ on:
   push:
     branches: [main]
 
+  workflow_dispatch:
+
 permissions:
   contents: read
 
 concurrency:
-  group: ci-${{ github.ref }}
+  group: ci-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -41,12 +46,21 @@ jobs:
       - name: Verificar qualidade
         run: uv run --locked ruff check .
 
+      # Quality gate de cobertura (PGC 5.3).
+      # Pacote inteiro: limite no valor atual (18%), desvio registrado em Issue
+      # com plano para chegar a 60%. Camada de validação: mantém 80%.
       - name: Executar testes com cobertura
         run: >
-          uv run --locked pytest tests/unit
-          --cov=fundscope.validation
+          uv run --locked python -m pytest tests/unit
+          --cov=fundscope
           --cov-report=term-missing
-          --cov-fail-under=80
+          --cov-fail-under=18
+
+      - name: Verificar cobertura da validacao
+        run: >
+          uv run --locked python -m coverage report
+          --include="*/fundscope/validation/*"
+          --fail-under=80
 
       - name: Validar Docker Compose
         env:
@@ -75,3 +89,37 @@ jobs:
           trap 'docker compose --env-file .env.example down -v' EXIT
           docker compose --env-file .env.example up -d --wait postgres
           docker compose --env-file .env.example run --rm app
+
+  dependencias:
+    name: Análise de dependências (SCA)
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Obter codigo
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Bloquear vulnerabilidades criticas
+        uses: actions/dependency-review-action@bbc44d14a204704ccc493733616cd1e93a0321ec # v5.0.1
+        with:
+          fail-on-severity: critical
+
+  ci-ok:
+    name: ci-ok
+    if: always()
+    needs: [quality, dependencias]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Conferir resultado dos jobs
+        env:
+          RESULTADOS: ${{ join(needs.*.result, ' ') }}
+        run: |
+          echo "Resultados: $RESULTADOS"
+          for r in $RESULTADOS; do
+            if [ "$r" = "failure" ] || [ "$r" = "cancelled" ]; then
+              echo "::error::Algum job do CI falhou. Merge bloqueado (PGC 5.2)."
+              exit 1
+            fi
+          done
