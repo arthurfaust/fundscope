@@ -1,0 +1,23 @@
+name: Defeito
+description: Relate um erro encontrado
+title: 'fix: '
+body:
+  - type: input
+    id: versao
+    attributes:
+      label: Versão e ambiente
+      description: Informe o commit ou tag da imagem, se souber, e onde o erro ocorreu.
+    validations:
+      required: true
+  - type: textarea
+    id: passos
+    attributes:
+      label: Passos para reproduzir
+    validations:
+      required: true
+  - type: textarea
+    id: esperado
+    attributes:
+      label: Resultado esperado e obtido
+    validations:
+      required: true

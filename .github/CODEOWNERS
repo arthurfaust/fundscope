@@ -1,0 +1,11 @@
+# Responsáveis pelo FundScope (PGC 2 e 5.2).
+# arthurfaust: desenvolvedor líder. wesleydsoreis: par de revisão.
+# Infraestrutura, banco e dependências exigem atenção dos dois.
+*                    @arthurfaust @wesleydsoreis
+/.github/            @arthurfaust @wesleydsoreis
+/Dockerfile          @arthurfaust @wesleydsoreis
+/docker-compose.yml  @arthurfaust @wesleydsoreis
+/dags/               @arthurfaust @wesleydsoreis
+/sql/                @arthurfaust @wesleydsoreis
+/pyproject.toml      @arthurfaust @wesleydsoreis
+/uv.lock             @arthurfaust @wesleydsoreis

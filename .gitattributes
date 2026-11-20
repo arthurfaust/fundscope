@@ -1,0 +1,5 @@
+# Normaliza finais de linha para os scripts executados em Linux.
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.pdf binary
