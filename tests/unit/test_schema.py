@@ -20,7 +20,7 @@ def test_aceita_colunas_extras_e_ordem_diferente():
 def test_rejeita_coluna_ausente():
     with pytest.raises(
         ValueError,
-        match="Colunas obrigatórias ausentes: data",
+        match="Colunas obrigatórias ausentes: valor",
     ):
         validar_colunas(
             colunas=["identificador"],
