@@ -25,7 +25,8 @@ Docker Compose, uv e GitHub Actions.
 - PostgreSQL local via Docker Compose, com os schemas silver,
   gold e metadata.
 - CI (qualidade, testes, build e integração com PostgreSQL) e
-  CD (publicação da imagem Docker no GHCR) no GitHub Actions.
+  CD (imagem Docker no GHCR, Releases versionadas e rollback)
+  no GitHub Actions.
 
 Ainda serão implementados a orquestração com Airflow, a camada
 Gold e o dashboard em Streamlit.
@@ -34,7 +35,8 @@ Gold e o dashboard em Streamlit.
 
     .
     ├── .github/             # Templates de PR e Issue, CODEOWNERS
-    │   └── workflows/       # CI (ci.yml), título do PR (pr-titulo.yml) e CD (cd.yml)
+    │   └── workflows/       # CI, título do PR, CD e rollback
+    ├── scripts/             # Cálculo da próxima versão (proxima-versao.mjs)
     ├── docs/                # Plano de GCS e evidências
     │   └── evidencias/      # Prints e logs das configurações
     ├── sql/                 # Script de criação dos schemas
@@ -152,13 +154,31 @@ Para verificar a conexão do container com o PostgreSQL:
   `titulo-pr` valida se o título segue Conventional Commits, pois
   ele vira a mensagem do commit na `main` após o squash.
 - **CD** (`.github/workflows/cd.yml`): roda a cada merge na
-  `main` e publica a imagem em `ghcr.io/arthurfaust/fundscope`
-  em duas etapas:
-  1. **staging:** constrói a imagem, verifica a execução do
-     container e publica as tags `sha-<commit>` e `staging`.
-  2. **production:** aguarda a aprovação do revisor obrigatório
-     e promove a mesma imagem, sem reconstruir, para as tags
-     `production` e `latest`.
+  `main` (exceto mudanças só em `docs/` e `.md`) e também pelo
+  botão *Run workflow*:
+  1. **Versão e imagem:** `scripts/proxima-versao.mjs` calcula a
+     versão pelos títulos dos PRs desde a última tag e a imagem é
+     construída **uma única vez** como
+     `ghcr.io/arthurfaust/fundscope:sha-<commit>`.
+  2. **Staging:** executa a imagem candidata e marca a tag
+     `staging`.
+  3. **Produção:** aguarda a aprovação no Environment
+     `production`, promove a **mesma** imagem para `vX.Y.Z`,
+     `production` e `latest` e cria a baseline: tag Git `vX.Y.Z`
+     e Release com notas e o código-fonte anexado.
+- **Rollback** (`.github/workflows/rollback.yml`): *Actions →
+  Rollback → Run workflow* com uma tag (ex.: `v1.0.0`). Após a
+  aprovação, reaponta `production` e `latest` para a imagem dessa
+  versão e marca a Release dela como *Latest*, sem recompilar.
+
+### Versionamento (SemVer)
+
+| Título do PR mesclado | Efeito |
+|---|---|
+| `feat: ...` | MINOR: 1.2.0 → 1.3.0 |
+| `fix: ...` ou `perf: ...` | PATCH: 1.2.0 → 1.2.1 |
+| `feat!: ...` ou `BREAKING CHANGE:` na descrição | MAJOR: 1.2.0 → 2.0.0 |
+| `docs`, `chore`, `ci`, `test`, `refactor`, `style` | sem versão nova; produção não roda |
 
 ## Parar o ambiente
 
