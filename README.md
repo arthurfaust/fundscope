@@ -19,8 +19,9 @@ Docker Compose, uv e GitHub Actions.
 - Fluxo inicial Bronze -> Silver implementado em
   `src/fundscope/pipeline.py`: leitura do CSV da CVM, validação,
   transformação e carga no PostgreSQL.
-- Testes unitários da camada de validação, com cobertura
-  mínima de 80% exigida no CI.
+- Testes unitários da camada de validação. O CI exige 80% de
+  cobertura nessa camada e 18% no pacote inteiro (valor atual,
+  com plano registrado em Issue para chegar a 60%).
 - PostgreSQL local via Docker Compose, com os schemas silver,
   gold e metadata.
 - CI (qualidade, testes, build e integração com PostgreSQL) e
@@ -33,7 +34,7 @@ Gold e o dashboard em Streamlit.
 
     .
     ├── .github/             # Templates de PR e Issue, CODEOWNERS
-    │   └── workflows/       # CI (ci.yml) e CD (cd.yml)
+    │   └── workflows/       # CI (ci.yml), título do PR (pr-titulo.yml) e CD (cd.yml)
     ├── docs/                # Plano de GCS e evidências
     │   └── evidencias/      # Prints e logs das configurações
     ├── sql/                 # Script de criação dos schemas
@@ -59,7 +60,7 @@ Resumo das práticas adotadas:
 
 - **Branch protegida:** a `main` não aceita push direto. Toda
   mudança entra por pull request, com aprovação de um revisor e
-  o check "Qualidade e testes" aprovado.
+  os checks obrigatórios `ci-ok` e `titulo-pr` aprovados.
 - **Revisão em par:** um colaborador com acesso de escrita revisa
   e aprova os pull requests.
 - **Branches de trabalho:** `feature/*`, `fix/*`, `docs/*`,
@@ -104,7 +105,7 @@ Os registros das configurações estão em
 
 ## Executar os testes
 
-    uv run pytest tests/unit --cov=fundscope.validation --cov-report=term-missing
+    uv run python -m pytest tests/unit --cov=fundscope --cov-report=term-missing
 
 ## Ambiente local com Docker
 
@@ -139,9 +140,17 @@ Para verificar a conexão do container com o PostgreSQL:
 ## Integração e entrega contínuas
 
 - **CI** (`.github/workflows/ci.yml`): roda em pull requests e
-  pushes na `main`. Verifica formatação e qualidade com Ruff,
-  executa os testes com cobertura, valida o Docker Compose,
-  constrói a imagem e testa a integração com o PostgreSQL.
+  pushes na `main`, com três jobs:
+  1. **Qualidade e testes:** formatação e lint com Ruff, testes
+     com quality gate de cobertura, validação do Docker Compose,
+     build da imagem e integração com o PostgreSQL.
+  2. **Análise de dependências (SCA):** compara as dependências
+     do PR com a `main` e bloqueia vulnerabilidades críticas.
+  3. **ci-ok:** agrega os anteriores; é o único check de CI
+     marcado como obrigatório na proteção da `main`.
+- **Título do PR** (`.github/workflows/pr-titulo.yml`): o check
+  `titulo-pr` valida se o título segue Conventional Commits, pois
+  ele vira a mensagem do commit na `main` após o squash.
 - **CD** (`.github/workflows/cd.yml`): roda a cada merge na
   `main` e publica a imagem em `ghcr.io/arthurfaust/fundscope`
   em duas etapas:
