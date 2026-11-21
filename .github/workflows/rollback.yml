@@ -1,0 +1,69 @@
+# Rollback do FundScope (PGC 6.4). Adaptado de docs/aulas/modelos/rollback-modelo.yml da ONGConecta.
+#
+# Aba Actions -> "Rollback" -> Run workflow -> tag (ex.: v1.0.0).
+# NÃO recompila: reaponta as tags "production" e "latest" do GHCR para a imagem
+# daquela versão (a própria baseline) e marca a Release dela como "Latest".
+# Passa pelo mesmo gate de aprovação do Environment "production".
+
+name: Rollback
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag da versão para a qual voltar (ex.: v1.0.0)'
+        required: true
+        type: string
+
+concurrency:
+  group: cd-refs/heads/main # mesma fila do CD: nunca roda junto com um deploy
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  rollback:
+    name: Rollback para ${{ inputs.tag }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: production
+      url: ${{ github.server_url }}/${{ github.repository }}/releases/tag/${{ inputs.tag }}
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      TAG: ${{ inputs.tag }}
+      IMAGEM: ghcr.io/${{ github.repository }}
+
+    steps:
+      - name: Validar tag e Release
+        run: |
+          echo "$TAG" | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+$' || {
+            echo "::error::Tag inválida: use o formato vX.Y.Z"; exit 1; }
+          gh release view "$TAG" --repo "$GITHUB_REPOSITORY" > /dev/null || {
+            echo "::error::Não existe Release $TAG."; exit 1; }
+
+      - name: Login no GHCR
+        run: echo "$GH_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+
+      - name: Reapontar production e latest para a imagem da versao
+        run: |
+          docker buildx imagetools inspect "$IMAGEM:$TAG" > /dev/null || {
+            echo "::error::Imagem $IMAGEM:$TAG não encontrada no GHCR."; exit 1; }
+          docker buildx imagetools create \
+            --tag "$IMAGEM:production" \
+            --tag "$IMAGEM:latest" \
+            "$IMAGEM:$TAG"
+
+      - name: Marcar a Release como a versao oficial (Latest)
+        run: gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --latest
+
+      - name: Registrar no resumo (auditoria, PGC 10.3)
+        run: |
+          {
+            echo "## Rollback executado"
+            echo "- Versão oficial voltou para **$TAG** (imagem \`$IMAGEM:$TAG\`)."
+            echo "- Solicitado por: @$GITHUB_ACTOR"
+            echo "- Próximo passo: abrir uma Issue com o motivo e corrigir a main (revert ou fix via PR)."
+          } >> "$GITHUB_STEP_SUMMARY"
