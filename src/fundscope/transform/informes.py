@@ -5,6 +5,8 @@ COLUNAS_NUMERICAS = [
     "VL_PATRIM_LIQ",
 ]
 
+TAMANHO_CNPJ = 14
+
 
 def transformar_informes(
     df: pd.DataFrame,
@@ -16,10 +18,10 @@ def transformar_informes(
     # Padroniza nomes das colunas
     resultado.columns = [coluna.strip().upper() for coluna in resultado.columns]
 
-    # Normaliza CNPJ
-    resultado["CNPJ_FUNDO_CLASSE"] = (
-        resultado["CNPJ_FUNDO_CLASSE"].astype(str).str.replace(r"\D", "", regex=True)
-    )
+    # Normaliza CNPJ e trata como ausente o que não tiver 14 dígitos
+    # (ex.: "-" viraria string vazia e passaria pelo dropna).
+    cnpj = resultado["CNPJ_FUNDO_CLASSE"].astype(str).str.replace(r"\D", "", regex=True)
+    resultado["CNPJ_FUNDO_CLASSE"] = cnpj.where(cnpj.str.len() == TAMANHO_CNPJ)
 
     # Converte data
     resultado["DT_COMPTC"] = pd.to_datetime(
