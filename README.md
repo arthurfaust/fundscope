@@ -147,7 +147,8 @@ Para verificar a conexão do container com o PostgreSQL:
      com quality gate de cobertura, validação do Docker Compose,
      build da imagem e integração com o PostgreSQL.
   2. **Análise de dependências (SCA):** compara as dependências
-     do PR com a `main` e bloqueia vulnerabilidades críticas.
+     do PR com a `main` e bloqueia vulnerabilidades de
+     severidade alta ou crítica (ADR 0002).
   3. **ci-ok:** agrega os anteriores; é o único check de CI
      marcado como obrigatório na proteção da `main`.
 - **Título do PR** (`.github/workflows/pr-titulo.yml`): o check
