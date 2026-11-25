@@ -14,6 +14,15 @@ def _informes(cnpjs: list[object]) -> pd.DataFrame:
     )
 
 
+def test_descarta_cota_zero_ou_negativa():
+    df = _informes(["12345678000199"] * 3)
+    df["VL_QUOTA"] = ["1.5", "0", "-2"]
+
+    resultado = transformar_informes(df)
+
+    assert resultado["VL_QUOTA"].tolist() == [1.5]
+
+
 def test_normaliza_cnpj_removendo_pontuacao():
     resultado = transformar_informes(_informes(["12.345.678/0001-99"]))
 
