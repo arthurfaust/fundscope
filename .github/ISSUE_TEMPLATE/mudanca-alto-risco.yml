@@ -1,0 +1,40 @@
+name: Mudança de alto risco (CCM)
+description: Mudança que exige decisão do Comitê de Controle de Mudanças (PGC 8.2)
+title: '[Alto risco] '
+labels: ['ccm']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use este formulário apenas para mudanças que se enquadram no PGC 8.2.
+        O CCM (desenvolvedor líder + par de revisão) discute nos comentários e registra a decisão.
+        A mudança só é implementada depois da decisão registrada.
+  - type: checkboxes
+    id: criterio
+    attributes:
+      label: Por que é alto risco?
+      options:
+        - label: 'Altera a estrutura do banco (schemas silver, gold ou metadata) com dados já carregados'
+        - label: 'Passa a armazenar dado pessoal (ex.: CPF de cotista, nome de gestor) ou muda o tratamento de dados (LGPD)'
+        - label: 'Troca versão major da infraestrutura (PostgreSQL, Python, imagem base)'
+        - label: 'Altera o layout lido dos arquivos da CVM ou a regra de descarte de registros'
+        - label: 'Exceção ao fluxo padrão (ex.: hotfix direto em produção)'
+  - type: textarea
+    id: descricao
+    attributes:
+      label: Descrição da mudança
+      description: O que muda, por que e qual o impacto esperado nos dados e no pipeline.
+    validations:
+      required: true
+  - type: textarea
+    id: rollback
+    attributes:
+      label: Plano de rollback
+      description: 'Como voltar atrás se der errado? Cite a tag (ex.: v1.0.1 pelo workflow Rollback), script de reversão ou backup.'
+    validations:
+      required: true
+  - type: textarea
+    id: decisao
+    attributes:
+      label: Decisão do CCM (preenchido pelo comitê)
+      placeholder: 'Aprovada / Aprovada com ressalvas / Rejeitada: justificativa'

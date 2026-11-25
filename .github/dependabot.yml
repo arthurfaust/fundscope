@@ -1,0 +1,57 @@
+# Dependabot: PGC seção 13 (dependências de terceiros como itens de configuração).
+# Adaptado de .github/dependabot.yml da ONGConecta.
+#
+# Abre PRs semanais de atualização; eles passam pelo mesmo CI e revisão dos demais.
+# O prefixo "chore(deps)" faz o título passar no check titulo-pr e não gera versão nova.
+
+version: 2
+updates:
+  # Dependências Python (pyproject.toml + uv.lock).
+  - package-ecosystem: uv
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 3
+    commit-message:
+      prefix: 'chore(deps)'
+    groups:
+      dev-dependencies:
+        dependency-type: development
+
+  # Imagens do Dockerfile (python e uv).
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 2
+    commit-message:
+      prefix: 'chore(deps)'
+    ignore:
+      # A versão do Python acompanha o .python-version e o requires-python:
+      # troca de 3.12 para 3.13 é decisão do projeto, não atualização automática.
+      - dependency-name: 'python'
+        update-types: ['version-update:semver-major', 'version-update:semver-minor']
+
+  # Imagem do PostgreSQL no docker-compose.yml.
+  - package-ecosystem: docker-compose
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 2
+    commit-message:
+      prefix: 'chore(deps)'
+    ignore:
+      # Versão major do PostgreSQL exige migração dos dados: mudança de alto risco (CCM).
+      - dependency-name: 'postgres'
+        update-types: ['version-update:semver-major']
+
+  # As próprias actions usadas nos workflows também são dependências.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    commit-message:
+      prefix: 'chore(deps)'
