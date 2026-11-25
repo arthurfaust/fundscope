@@ -29,6 +29,12 @@ def processar_arquivo(caminho: str | Path) -> int:
     print("3. Transformando dados")
     df_transformado = transformar_informes(df)
 
+    descartados = len(df) - len(df_transformado)
+    print(
+        f"   {len(df_transformado)} registros validos, "
+        f"{descartados} descartados (CNPJ ou data invalidos, ou duplicados)."
+    )
+
     print("4. Carregando dados no PostgreSQL")
     quantidade = carregar_informes(df_transformado)
 
