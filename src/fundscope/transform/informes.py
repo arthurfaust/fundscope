@@ -44,6 +44,9 @@ def transformar_informes(
         ]
     )
 
+    # Cota de fundo nunca é zero ou negativa: valor assim indica erro no informe
+    resultado = resultado[~(resultado["VL_QUOTA"] <= 0)]
+
     # Remove duplicados
     resultado = resultado.drop_duplicates()
 
