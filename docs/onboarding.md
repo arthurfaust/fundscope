@@ -9,39 +9,101 @@ confuso ou errado, corrija o próprio guia num PR `docs: ...`.
 | Ferramenta | Versão | Como conferir |
 |---|---|---|
 | Git | qualquer recente | `git --version` |
-| uv | 0.12.17 ou mais recente | `uv --version` |
+| uv | 0.12.17, a mesma usada pelo CI | `uv --version` |
 | Docker com Compose | opcional, só para o PostgreSQL e a imagem | `docker compose version` |
 
-- Instalar o uv: <https://docs.astral.sh/uv/getting-started/installation/>.
-  O uv instala o Python 3.12 sozinho; não é preciso instalar o Python antes.
-- **Windows:** use o WSL ou o **Git Bash**. O PowerShell padrão não aceita `&&`.
+Instale o uv pelo instalador oficial, usando o comando do seu terminal:
+
+**Windows (PowerShell):**
+
+```powershell
+Invoke-RestMethod https://astral.sh/uv/0.12.17/install.ps1 | Invoke-Expression
+```
+
+**Linux, macOS ou WSL (Bash):**
+
+```bash
+curl -LsSf https://astral.sh/uv/0.12.17/install.sh | sh
+```
+
+Feche e abra o terminal depois da instalação e confira `uv --version`.
+Se `uv` não for reconhecido, verifique se a pasta informada pelo instalador
+está no `PATH` desse terminal. Outras opções de instalação estão em
+<https://docs.astral.sh/uv/getting-started/installation/>.
+
+- O uv baixa o Python 3.12 indicado em `.python-version` durante o `uv sync`;
+  não é preciso instalar o Python nem ativar o ambiente virtual manualmente.
+- Use a versão do uv indicada acima para reproduzir o CI. Uma versão mais nova
+  pode mostrar um aviso de incompatibilidade com o intervalo de `uv_build`
+  definido em `pyproject.toml`.
+- **Windows:** os passos 2 e 3 funcionam no PowerShell, executando um comando
+  por linha. O Windows PowerShell 5.1 não aceita `&&`; o PowerShell 7 aceita.
+  WSL e Git Bash são alternativas. Mantenha instalação e execução no mesmo
+  ambiente: o uv instalado no Windows não equivale a uma instalação no WSL.
 - **Rede do laboratório:** a porta 22 costuma estar bloqueada; clone por `https://`.
 
 ## 2. Preparar o ambiente
 
-```bash
+Abra o terminal na pasta onde deseja criar a cópia do projeto. O clone cria
+uma subpasta chamada `fundscope`; não execute o comando dentro de outra cópia.
+Os comandos abaixo funcionam em PowerShell e Bash, um por linha:
+
+```text
 git clone https://github.com/arthurfaust/fundscope.git
 cd fundscope
 uv sync --locked --dev
 ```
 
-O `--locked` garante as mesmas versões do `uv.lock` usadas pelo CI. O `--dev`
-instala também pytest, pytest-cov e ruff.
+Execute os próximos comandos dentro de `fundscope`, onde estão `pyproject.toml`
+e `uv.lock`. A primeira sincronização precisa de internet para baixar o Python
+e as dependências e cria o ambiente virtual local `.venv`.
 
-## 3. Rodar a verificação que o CI faz
+O `--locked` exige que `uv.lock` esteja atualizado e usa as versões fixadas
+nele. O `--dev` instala também pytest, pytest-cov e ruff. Se o comando falhar,
+resolva o erro antes de continuar; não remova `--locked` nem atualize o lockfile
+apenas para contornar uma falha de instalação.
 
-Rode estes comandos antes de abrir um PR. Se passarem aqui, passam no CI.
+## 3. Rodar as verificações locais de qualidade e testes
 
-```bash
-uv run ruff format --check .
-uv run ruff check .
-uv run python -m pytest tests/unit --cov=fundscope --cov-report=term-missing
+Rode os comandos abaixo antes de abrir um PR. Eles reproduzem a formatação,
+o lint e os limites de cobertura do CI, mas não garantem que todo o CI passe:
+o workflow também verifica Docker, integração com PostgreSQL, título do PR
+e dependências. Para os comandos desta seção, Docker, banco e `.env` não são
+necessários.
+
+```text
+uv run --locked ruff format --check .
+uv run --locked ruff check .
+uv run --locked python -m pytest tests/unit --cov=fundscope --cov-report=term-missing --cov-fail-under=18
+uv run --locked python -m coverage report --include="*/fundscope/validation/*" --fail-under=80
 ```
 
+Execute um comando por vez e confira o resultado antes de seguir. A última
+verificação usa o arquivo `.coverage` gerado pelo pytest; rode-a depois dos
+testes. Os limites atuais são 18% para o pacote completo e 80% para a camada
+de validação, conforme `.github/workflows/ci.yml`.
+
 - Use `python -m pytest`, e não só `pytest`.
-- Se `ruff format --check` reclamar, rode `uv run ruff format .` e confira a diferença.
-- Se aparecer `Failed to spawn: pytest` ou `No such file or directory`, o `.venv`
-  foi criado em outra pasta. Recrie com `rm -rf .venv && uv sync --locked --dev`.
+- Se `ruff format --check` reclamar, rode `uv run --locked ruff format .` e
+  confira a diferença antes de incluir arquivos no commit.
+- Se aparecer `Failed to spawn: pytest` ou `No such file or directory`, confira
+  primeiro a pasta atual e rode `uv sync --locked --dev`. A mensagem sozinha
+  não comprova que o ambiente foi criado em outra pasta.
+- Não copie nem compartilhe `.venv` entre pastas, Windows e WSL. Se o ambiente
+  foi movido ou copiado e o erro persistir, recrie somente a `.venv` da cópia
+  atual. Confirme que está na raiz correta antes de executar:
+
+  **PowerShell:**
+  ```powershell
+  Remove-Item -LiteralPath .venv -Recurse -Force
+  uv sync --locked --dev
+  ```
+
+  **Bash:**
+  ```bash
+  rm -rf .venv
+  uv sync --locked --dev
+  ```
 
 ## 4. PostgreSQL local (opcional)
 
@@ -69,7 +131,8 @@ A `main` é protegida: ninguém faz push direto nela. Toda mudança entra por PR
    *Funcionalidade* ou *Defeito*) e atribua a você.
 2. **Branch** a partir da `main` atualizada:
    ```bash
-   git switch main && git pull
+   git switch main
+   git pull --ff-only
    git switch -c feature/<numero-da-issue>-<descricao-curta>
    ```
    Prefixos: `feature/`, `fix/`, `docs/`, `ci/`, `chore/`, `revert/`.
