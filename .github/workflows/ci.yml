@@ -100,10 +100,12 @@ jobs:
       - name: Obter codigo
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - name: Bloquear vulnerabilidades criticas
+      # Limite definido no ADR 0002 (docs/adr/0002-limite-de-vulnerabilidades-no-ci.md):
+      # bloqueia high e critical; moderate e low são risco aceito. Revisão em 24/02/2027.
+      - name: Bloquear vulnerabilidades high e criticas
         uses: actions/dependency-review-action@bbc44d14a204704ccc493733616cd1e93a0321ec # v5.0.1
         with:
-          fail-on-severity: critical
+          fail-on-severity: high
 
   ci-ok:
     name: ci-ok
